@@ -157,7 +157,7 @@ public class Board {
                 UnsupportedEncodingException{
         JSONObject response = new JSONObject();
         Integer turn = data.getInt("turn");
-        if(playerUuid.equals(UUID.fromString(data.getJSONArray("players").getJSONObject(turn).getString("uuid")))){
+        if(playerUuid.equals((UUID)data.getJSONArray("players").getJSONObject(turn).get("uuid"))){
             JSONObject player = data.getJSONArray("players").getJSONObject(turn);
             
             Integer dice = new Random().nextInt(6) + 1;
