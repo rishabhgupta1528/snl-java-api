@@ -2,7 +2,6 @@ package com.qainfotech.tap.training.snl.api;
 
 import java.util.UUID;
 import java.util.Random;
-import java.io.PrintWriter;
 import java.io.IOException;
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
@@ -18,48 +17,8 @@ import org.json.JSONArray;
  */
 public class Board {
     
-    UUID uuid;
-    JSONObject data;
+    BoardModel boardModel;
     
-    private JSONObject getStep(Integer number, Integer type, Integer target){
-        return new JSONObject("{\"number\":"+number+",\"type\":"+type+", \"target\":"+target+"}");
-    }
-
-    private void initBoard(){
-        JSONArray steps = new JSONArray();
-        for(int position = 0; position <=100; position++){
-            steps.put(position, getStep(position, 0, position));
-        }
-        // snakes
-        steps.put(99, getStep(99, 1, 3));
-        steps.put(93, getStep(93, 1, 67));
-        steps.put(55, getStep(55, 1, 13));
-        steps.put(70, getStep(70, 1, 32));
-        steps.put(23, getStep(23, 1, 7));
-        // ladders
-        steps.put(2, getStep(2, 2, 24));
-        steps.put(11, getStep(11, 2, 33));
-        steps.put(25, getStep(25, 2, 85));
-        steps.put(37, getStep(37, 2, 61));
-        steps.put(68, getStep(68, 2, 90));
-        steps.put(79, getStep(79, 2, 97));
-        
-        data = new JSONObject();
-        data.put("players", new JSONArray());
-        data.put("turn", 0);
-        data.put("steps", steps);
-    }
-    
-    private void saveBoard()
-            throws FileNotFoundException, UnsupportedEncodingException{
-        saveBoard(this.data);
-    }
-    private void saveBoard(JSONObject content)
-            throws FileNotFoundException, UnsupportedEncodingException{
-        PrintWriter writer = new PrintWriter(uuid.toString() + ".board", "UTF-8");
-        writer.println(content.toString(2));
-        writer.close();
-    }
     
     /**
      * construct a new board
@@ -68,9 +27,7 @@ public class Board {
      */
     public Board()
             throws FileNotFoundException, UnsupportedEncodingException{
-        this.uuid = UUID.randomUUID();
-        initBoard();
-        saveBoard();
+        boardModel = new BoardModel();
     }
     
     /**
@@ -93,10 +50,10 @@ public class Board {
     public JSONArray registerPlayer(String name) 
             throws PlayerExistsException, GameInProgressException,
                 FileNotFoundException, UnsupportedEncodingException, MaxPlayersReachedExeption {
-        if(data.getJSONArray("players").length()==4){
+        if(boardModel.data.getJSONArray("players").length()==4){
             throw new MaxPlayersReachedExeption(4);
         }
-        for(Object playerObject:data.getJSONArray("players")){
+        for(Object playerObject:boardModel.data.getJSONArray("players")){
             JSONObject player = (JSONObject)playerObject;
             if(player.getString("name").equals(name)){
                 throw new PlayerExistsException(name);
@@ -109,9 +66,9 @@ public class Board {
         newPlayer.put("name", name);
         newPlayer.put("uuid", UUID.randomUUID());
         newPlayer.put("position", 0);
-        data.getJSONArray("players").put(newPlayer);
-        saveBoard();
-        return data.getJSONArray("players");
+        boardModel.data.getJSONArray("players").put(newPlayer);
+        boardModel.saveBoard();
+        return boardModel.data.getJSONArray("players");
     }
     
     /**
@@ -126,20 +83,20 @@ public class Board {
             throws NoUserWithSuchUUIDException, FileNotFoundException,
                 UnsupportedEncodingException{
         Boolean response = false;
-        for(int i = 0; i < data.getJSONArray("players").length(); i++){
-            JSONObject player = data.getJSONArray("players").getJSONObject(i);
+        for(int i = 0; i < boardModel.data.getJSONArray("players").length(); i++){
+            JSONObject player = boardModel.data.getJSONArray("players").getJSONObject(i);
             
             if(player.getString("uuid").equals(playerUuid.toString())){
-                data.getJSONArray("players").remove(i);
-                data.put("turn", 0);
-                saveBoard();
+                boardModel.data.getJSONArray("players").remove(i);
+                boardModel.data.put("turn", 0);
+                boardModel.saveBoard();
                 response = true;
             }
         }
         if(!response){
             throw new NoUserWithSuchUUIDException(playerUuid.toString());
         }
-        return data.getJSONArray("players");
+        return boardModel.data.getJSONArray("players");
     }
     
     /**
@@ -156,9 +113,9 @@ public class Board {
             throws InvalidTurnException, FileNotFoundException,
                 UnsupportedEncodingException{
         JSONObject response = new JSONObject();
-        Integer turn = data.getInt("turn");
-        if(playerUuid.equals((UUID)data.getJSONArray("players").getJSONObject(turn).get("uuid"))){
-            JSONObject player = data.getJSONArray("players").getJSONObject(turn);
+        Integer turn = boardModel.data.getInt("turn");
+        if(playerUuid.equals((UUID)boardModel.data.getJSONArray("players").getJSONObject(turn).get("uuid"))){
+            JSONObject player = boardModel.data.getJSONArray("players").getJSONObject(turn);
             
             Integer dice = new Random().nextInt(6) + 1;
             Integer currentPosition = player.getInt("position");
@@ -166,7 +123,7 @@ public class Board {
             String message = "";
             String playerName = player.getString("name");
             if(newPosition <= 100){
-                JSONObject step = data.getJSONArray("steps").getJSONObject(newPosition);
+                JSONObject step = boardModel.data.getJSONArray("steps").getJSONObject(newPosition);
                 newPosition = step.getInt("target");
                 if(step.getInt("type")==0){
                     message = "Player moved to " + newPosition;
@@ -175,16 +132,16 @@ public class Board {
                 }else if(step.getInt("type")==2){
                     message = "Player climbed a ladder, moved to " + newPosition;
                 }
-                data.getJSONArray("players").getJSONObject(turn).put("position", newPosition);
+                boardModel.data.getJSONArray("players").getJSONObject(turn).put("position", newPosition);
             }else{
                 message = "Incorrect roll of dice. Player did not move";
             }
             Integer newTurn = turn+1;
-            if(newTurn >= data.getJSONArray("players").length()){
+            if(newTurn >= boardModel.data.getJSONArray("players").length()){
                 newTurn = 0;
             }
-            data.put("turn", newTurn);
-            saveBoard();
+            boardModel.data.put("turn", newTurn);
+            boardModel.saveBoard();
             response.put("message", message);
             response.put("playerUuid", playerUuid);
             response.put("playerName", playerName);
@@ -202,8 +159,8 @@ public class Board {
      * @throws IOException
      */
     public Board(UUID uuid) throws IOException {
-        this.uuid = uuid;
-        this.data = new JSONObject(new String(
+        boardModel.uuid = uuid;
+        boardModel.data = new JSONObject(new String(
                 Files.readAllBytes(Paths.get(uuid.toString() + ".board"))));
     }
     
@@ -213,22 +170,22 @@ public class Board {
      */
     @Override
     public String toString(){
-        return this.uuid.toString();
+        return "UUID:" + boardModel.uuid.toString() + "\n" + boardModel.data.toString();
     }
     
     /**
-     * 
+     * return complete board data in JSON with turn, players list and steps
      * @return JSONObject board data containing steps, players and turn
      */
     public JSONObject getData(){
-        return data;
+        return boardModel.data;
     }
     
     /**
-     * 
+     * returns board uuid object
      * @return UUID of this board object
      */
     public UUID getUUID(){
-        return uuid;
+        return boardModel.uuid;
     }
 }
