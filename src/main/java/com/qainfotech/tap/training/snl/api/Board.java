@@ -50,7 +50,7 @@ public class Board {
      *   - Players must have unique names on a board
      *   - All players are on initial position - 0th step
      * @param name - player name
-     * @return JSONArray of registered players on the board with new player added
+     * @return UUID of registered player
      * @throws PlayerExistsException exception thrown when entered name 
      *        parameter matches existing players
      * @throws GameInProgressException exception thrown when we try to register 
@@ -60,7 +60,7 @@ public class Board {
      * @throws FileNotFoundException
      * @throws UnsupportedEncodingException
      */
-    public JSONArray registerPlayer(String name) 
+    public UUID registerPlayer(String name) 
             throws PlayerExistsException, GameInProgressException,
                 FileNotFoundException, UnsupportedEncodingException,
                 MaxPlayersReachedExeption, IOException {
@@ -78,11 +78,12 @@ public class Board {
         }
         JSONObject newPlayer = new JSONObject();
         newPlayer.put("name", name);
-        newPlayer.put("uuid", UUID.randomUUID());
+        UUID newPlayerUuid = UUID.randomUUID();
+        newPlayer.put("uuid", newPlayerUuid);
         newPlayer.put("position", 0);
         data.getJSONArray("players").put(newPlayer);
         BoardModel.save(uuid, data);
-        return BoardModel.data(uuid).getJSONArray("players");
+        return newPlayerUuid;
     }
     
     /**
