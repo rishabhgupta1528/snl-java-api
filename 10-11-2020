@@ -1,0 +1,48 @@
+http://dl.bintray.com/testng-team/testng-eclipse-release/
+
+https://www.javatpoint.com/package    ....read
+https://www.javatpoint.com/java-string-charat ...read
+https://www.guru99.com/introduction-webdriver-comparison-selenium-rc.html   ...
+https://www.guru99.com/all-about-testng-and-selenium.html
+https://www.javatpoint.com/how-to-get-input-from-user-in-java
+
+
+package com.calculator.demo;
+import com.calculator.*;
+import java.util.*; 
+public class calculator {
+	public static void main(String[] args) {
+		Scanner src = new Scanner(System.in);
+		int x= src.nextInt(); 
+		int y= src.nextInt();
+		System.out.println("Enter an operator (+, -, *, /): ");
+        char operator = src.next().charAt(0);
+        switch(operator)
+        {
+            case '+':
+            	Add a = new Add();
+            	a.addition(x,y);
+                break;
+
+            case '-':
+            	Subtract s = new Subtract();
+        		s.sub(x,y);
+                break;
+
+            case '*':
+            	Muti m =new Muti();
+        		m.multiplication(x,y);
+                break;
+
+            case '/':
+            	Division d = new Division();
+        		d.divide(x,y);
+                break;
+            default:
+                System.out.printf("Please enter valid operator");
+                return;
+        }
+
+	}
+
+}
